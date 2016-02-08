@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import scipy
+import random as r
 
 
 IMAGE_EDGE_LENGTH = 200 # we expect each image to be 200px x 200px
@@ -24,6 +25,30 @@ SIGMA = 1
 # linear regression, where the feature vector is the distance from the 'centers'
 # (which are actually just all of the training points)
 
+# TODO [Joe] Work in progress
+class shape():
+
+    def _rotate(random_theta):
+        theta = random_theta * 360
+        scipy.ndimage.rotate(self.canvas, theta)
+
+    def _translate(random_x, random_y):
+        x_shift = (random_x * 200) if (random_x * 200 < 200 -
+        y_shift
+        scipy.ndimage.shift()
+
+
+    def _scale(random_factor):
+
+        factor = math.ceil(random_factor * 200)
+
+    def __init__(self, shape_type='square'):
+        self.canvas = np.zeroes(shape=(200,200))
+        self.side_length = 4
+        self._rotate(r.random())
+
+
+        # Randomly choose size, orientation, location
 
 class RBF(object):
     """
