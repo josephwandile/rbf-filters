@@ -1,13 +1,27 @@
-from matplotlib import pyplot as plt
+import pylab
 import numpy as np
 import scipy
 import random as r
+import math
+from itertools import chain
 
+# Vertices. Feeding in tuples. Poggio and Edelman paper is the one we're
+# doing. Just use the corners.
 
-IMAGE_EDGE_LENGTH = 200 # we expect each image to be 200px x 200px
+# Inputs must be labeled. Top left. Top right. etc...
+
+# Bring up limitations in presentation like needing alignment, labeled
+# features...
+
+# Append it all and take euclidean distance
+# x1 y1 x2 y2 x3 y3 x4 y4
+# a1 b1 a2 b2 a3 b3 a4 b4
+
+IMAGE_EDGE_LENGTH = 200  # we expect each image to be 200px x 200px
 IMAGE_FEATURE_LENGTH = IMAGE_EDGE_LENGTH ** 2
-LAM = 0.0001 # 'lambda' is a reserved keyword in python
+LAM = 0.0001  # 'lambda' is a reserved keyword in python
 SIGMA = 1
+PI = math.pi
 
 # NOTE: PLEASE PLEASE PLEASE Make sure to confuse arrays and lists in comments
 
@@ -25,30 +39,72 @@ SIGMA = 1
 # linear regression, where the feature vector is the distance from the 'centers'
 # (which are actually just all of the training points)
 
-# TODO [Joe] Work in progress
-class shape():
-
-    def _rotate(random_theta):
-        theta = random_theta * 360
-        scipy.ndimage.rotate(self.canvas, theta)
-
-    def _translate(random_x, random_y):
-        x_shift = (random_x * 200) if (random_x * 200 < 200 -
-        y_shift
-        scipy.ndimage.shift()
-
-
-    def _scale(random_factor):
-
-        factor = math.ceil(random_factor * 200)
+class square():
 
     def __init__(self, shape_type='square'):
-        self.canvas = np.zeroes(shape=(200,200))
-        self.side_length = 4
-        self._rotate(r.random())
+        """
+        | tl  tr |
+        | bl  br |
+
+        self.tl, self.tr, self.bl, self.br = self.vertices
+        """
+
+        # Instantiate column vectors
+        self.vertices = [(0, 1), (1, 1), (0, 0), (1, 0)]
+        self.vector_rep = np.matrix([[],[]])
+
+        for i, vertex in enumerate(self.vertices):
+            self.vertices[i] = np.matrix(vertex).transpose()
+
+        self._rotate()
+        self._scale()
+        self._translate()
+
+        self.vector_rep = np.concatenate(self.vertices)
+
+    def _linear_transform(self, T):
+
+        for i, vertex in enumerate(self.vertices):
+
+            new_vertex = T * vertex
+            self.vertices[i] = new_vertex
 
 
-        # Randomly choose size, orientation, location
+    def _rotate(self):
+        theta = r.random() * PI * 2
+        T = np.matrix([[math.cos(theta), -math.sin(theta)],
+                       [math.sin(theta), math.cos(theta)]])
+
+        self._linear_transform(T)
+
+
+    def _scale(self):
+        factor = math.ceil(r.random() * 50)
+        T = np.matrix([[factor, 0],
+                       [0, factor]])
+
+        self._linear_transform(T)
+
+
+    def _translate(self):
+
+        scale_x, scale_y = r.random() * 50, r.random() * 50
+
+        for i, vertex in enumerate(self.vertices):
+
+            translated_vertex = np.matrix(
+                (scale_x, scale_y)).transpose() + vertex
+            self.vertices[i] = translated_vertex
+
+    def draw(self):
+
+        # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite. 
+        xs = np.ndarray.flatten(np.concatenate([vertex[0] for vertex in self.vertices])).tolist()[0]
+        ys = np.ndarray.flatten(np.concatenate([vertex[1] for vertex in self.vertices])).tolist()[0]
+
+        pylab.scatter(xs, ys, marker='.', s=5, c='black')
+        pylab.show()
+
 
 class RBF(object):
     """
@@ -58,13 +114,15 @@ class RBF(object):
     """
 
     def __init__(self, training_data):
-        # we expect training_data to be a list of images (which are 200x200 arrays)
+        # we expect training_data to be a list of images (which are 200x200
+        # arrays)
         self.training_data = training_data
         self.centers = self._images_to_vectors(self.training_data)
         G = self._compute_G(self.training_data)
-        K = len(self.centers) # the amount of data points
-        y = np.ones(K) # all the training examples are positive examples
-        self.weights = np.dot(np.dot(np.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
+        K = len(self.centers)  # the amount of data points
+        y = np.ones(K)  # all the training examples are positive examples
+        self.weights = np.dot(
+            np.dot(np.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
 
     def _images_to_vectors(images):
         return [np.flatten(x) for x in images]
@@ -85,6 +143,5 @@ class RBF(object):
         G = self._compute_G(vector_data)
         return np.dot(G, self.weights)
 
-
-if __name__ = "__main__":
-    pass
+test = square()
+test.draw()
