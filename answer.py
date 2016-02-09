@@ -53,9 +53,6 @@ class square():
         self.vertices = [(0, 1), (1, 1), (0, 0), (1, 0)]
         self.vector_rep = np.matrix([[],[]])
 
-        for i, vertex in enumerate(self.vertices):
-            self.vertices[i] = np.matrix(vertex).transpose()
-
         self._rotate()
         self._scale()
         self._translate()
@@ -66,41 +63,45 @@ class square():
 
         for i, vertex in enumerate(self.vertices):
 
-            new_vertex = T * vertex
+            x, y = vertex
+            new_vertex = (T[0] * x + T[1] * y), (T[2] * x + T[3] * y)
             self.vertices[i] = new_vertex
 
 
-    def _rotate(self):
-        theta = r.random() * PI * 2
-        T = np.matrix([[math.cos(theta), -math.sin(theta)],
-                       [math.sin(theta), math.cos(theta)]])
+    def _rotate(self, theta=None):
 
+        if theta is None:
+            theta = r.random() * PI * 2
+
+        T = math.cos(theta), -math.sin(theta), math.sin(theta), math.cos(theta)
         self._linear_transform(T)
 
 
-    def _scale(self):
-        factor = math.ceil(r.random() * 50)
-        T = np.matrix([[factor, 0],
-                       [0, factor]])
+    def _scale(self, factor=None):
+
+        if factor is None:
+            factor = math.ceil(r.random() * 50)
+
+        T = factor, 0, 0, factor
 
         self._linear_transform(T)
 
 
     def _translate(self):
 
-        scale_x, scale_y = r.random() * 50, r.random() * 50
+        translate_x, translate_y = r.random() * 50, r.random() * 50
 
         for i, vertex in enumerate(self.vertices):
 
-            translated_vertex = np.matrix(
-                (scale_x, scale_y)).transpose() + vertex
-            self.vertices[i] = translated_vertex
+            x, y = vertex
+            new_vertex = x + translate_x, y + translate_y
+            self.vertices[i] = new_vertex
 
     def draw(self):
 
-        # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite. 
-        xs = np.ndarray.flatten(np.concatenate([vertex[0] for vertex in self.vertices])).tolist()[0]
-        ys = np.ndarray.flatten(np.concatenate([vertex[1] for vertex in self.vertices])).tolist()[0]
+        # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite.
+        xs = [vertex[0] for vertex in self.vertices]
+        ys = [vertex[1] for vertex in self.vertices]
 
         pylab.scatter(xs, ys, marker='.', s=5, c='black')
         pylab.show()
@@ -114,8 +115,7 @@ class RBF(object):
     """
 
     def __init__(self, training_data):
-        # we expect training_data to be a list of images (which are 200x200
-        # arrays)
+        # Training data will be a list of vectors (x1,y1,x2,y2,x3,y3,x4,y4)
         self.training_data = training_data
         self.centers = self._images_to_vectors(self.training_data)
         G = self._compute_G(self.training_data)
