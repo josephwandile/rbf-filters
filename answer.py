@@ -19,7 +19,6 @@ SIGMA = 1
 PI = math.pi
 
 class Wireframe():
-
     def __init__(self, vertices=[(0, 1), (1, 1), (0, 0), (1, 0)]):
         """
         self.tl, self.tr, self.bl, self.br = self.vertices
@@ -34,47 +33,35 @@ class Wireframe():
         self.vector_rep = np.concatenate(self.vertices)
 
     def _linear_transform(self, T):
-
         for i, vertex in enumerate(self.vertices):
-
             x, y = vertex
             new_vertex = (T[0] * x + T[1] * y), (T[2] * x + T[3] * y)
             self.vertices[i] = new_vertex
 
-
     def _rotate(self, theta=None):
-
         if theta is None:
             theta = r.random() * PI * 2
 
         T = math.cos(theta), -math.sin(theta), math.sin(theta), math.cos(theta)
         self._linear_transform(T)
 
-
     def _scale(self, factor=None):
-
         if factor is None:
             random = r.random() * 50
             factor = random if random >= 1 else random + 1
 
         T = factor, 0, 0, factor
-
         self._linear_transform(T)
 
-
     def _translate(self):
-
         translate_x, translate_y = r.random() * 50, r.random() * 50
 
         for i, vertex in enumerate(self.vertices):
-
             x, y = vertex
             new_vertex = x + translate_x, y + translate_y
             self.vertices[i] = new_vertex
 
-
     def draw(self):
-
         # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite.
         xs = [vertex[0] for vertex in self.vertices]
         ys = [vertex[1] for vertex in self.vertices]
@@ -84,11 +71,10 @@ class Wireframe():
 
 
 class Square(Wireframe):
-
     def _label_vertices():
-
-        return
         # TODO relabel the vertices (i.e. correcl order them in the output vector) after the linear transformations in super.init
+        return
+
 
 class RBF(object):
     """
