@@ -1,29 +1,94 @@
-from matplotlib import pyplot as plt
+import pylab
 import numpy as np
 import scipy
+import random as r
+import math
 
+# TODOs
+# 0. Update euclidean distance formula.
+# 1. Limitations. Four corners. Aligned
+# 2. Dynamically label generated and test data. The corner closest to the top left should be the top left corner for example.
+# 3. Extend by considering the angles and side lengths instead of just the locations of the vertices.
 
-IMAGE_EDGE_LENGTH = 200 # we expect each image to be 200px x 200px
-IMAGE_FEATURE_LENGTH = IMAGE_EDGE_LENGTH ** 2
-LAM = 0.0001 # 'lambda' is a reserved keyword in python
+# Calculate euclidean distance between prototype vector and test vector
+# x1 y1 x2 y2 x3 y3 x4 y4
+# a1 b1 a2 b2 a3 b3 a4 b4
+
+LAM = 0.0001  # 'lambda' is a reserved keyword in python
 SIGMA = 1
+PI = math.pi
 
-# NOTE: PLEASE PLEASE PLEASE Make sure to confuse arrays and lists in comments
+class Wireframe():
 
-# NOTE: NOT ENTIRELY SURE
-#
-# My understanding thus far is that there are a series of RBF Units
-# (one for each training example in our case). To test something, you take
-# the euclidean distance between the image and the training image then you you
-# weight all of those values (using the weight equation given in the HW) and see
-# if it passes a threshold
+    def __init__(self, vertices=[(0, 1), (1, 1), (0, 0), (1, 0)]):
+        """
+        self.tl, self.tr, self.bl, self.br = self.vertices
+        """
 
-# NOTE: UPDATED: STILL NOT ENTIRELY SURE
-#
-# Still not entirely sure, but starting to think this is simply l2-regularized
-# linear regression, where the feature vector is the distance from the 'centers'
-# (which are actually just all of the training points)
+        self.vertices = vertices
 
+        self._rotate()
+        self._scale()
+        self._translate()
+
+        self.vector_rep = np.concatenate(self.vertices)
+
+    def _linear_transform(self, T):
+
+        for i, vertex in enumerate(self.vertices):
+
+            x, y = vertex
+            new_vertex = (T[0] * x + T[1] * y), (T[2] * x + T[3] * y)
+            self.vertices[i] = new_vertex
+
+
+    def _rotate(self, theta=None):
+
+        if theta is None:
+            theta = r.random() * PI * 2
+
+        T = math.cos(theta), -math.sin(theta), math.sin(theta), math.cos(theta)
+        self._linear_transform(T)
+
+
+    def _scale(self, factor=None):
+
+        if factor is None:
+            random = r.random() * 50
+            factor = random if random >= 1 else random + 1
+
+        T = factor, 0, 0, factor
+
+        self._linear_transform(T)
+
+
+    def _translate(self):
+
+        translate_x, translate_y = r.random() * 50, r.random() * 50
+
+        for i, vertex in enumerate(self.vertices):
+
+            x, y = vertex
+            new_vertex = x + translate_x, y + translate_y
+            self.vertices[i] = new_vertex
+
+
+    def draw(self):
+
+        # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite.
+        xs = [vertex[0] for vertex in self.vertices]
+        ys = [vertex[1] for vertex in self.vertices]
+
+        pylab.scatter(xs, ys, marker='.', s=5, c='black')
+        pylab.show()
+
+
+class Square(Wireframe):
+
+    def _label_vertices():
+
+        return
+        # TODO relabel the vertices (i.e. correcl order them in the output vector) after the linear transformations in super.init
 
 class RBF(object):
     """
@@ -33,13 +98,14 @@ class RBF(object):
     """
 
     def __init__(self, training_data):
-        # we expect training_data to be a list of images (which are 200x200 arrays)
+        # Training data will be a list of vectors (x1,y1,x2,y2,x3,y3,x4,y4)
         self.training_data = training_data
         self.centers = self._images_to_vectors(self.training_data)
         G = self._compute_G(self.training_data)
-        K = len(self.centers) # the amount of data points
-        y = np.ones(K) # all the training examples are positive examples
-        self.weights = np.dot(np.dot(np.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
+        K = len(self.centers)  # the amount of data points
+        y = np.ones(K)  # all the training examples are positive examples
+        self.weights = np.dot(
+            np.dot(np.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
 
     def _images_to_vectors(images):
         return [np.flatten(x) for x in images]
@@ -60,6 +126,5 @@ class RBF(object):
         G = self._compute_G(vector_data)
         return np.dot(G, self.weights)
 
-
-if __name__ = "__main__":
-    pass
+square = Square()
+square.draw()
