@@ -19,7 +19,7 @@ SIGMA = 1
 PI = math.pi
 
 class Wireframe(object):
-    
+
 
     def __init__(self, vertices=[(0, 1), (1, 1), (0, 0), (1, 0)]):
         """
@@ -28,8 +28,8 @@ class Wireframe(object):
 
         self.vertices = vertices
 
-        self._rotate()
         self._scale()
+        self._rotate()
         self._translate()
 
         self.vector_rep = np.concatenate(self.vertices)
@@ -42,21 +42,23 @@ class Wireframe(object):
 
     def _rotate(self, theta=None):
         if theta is None:
-            theta = r.random() * PI * 2
+
+            # Avoid relabeling corners
+            theta = r.random() * (PI/2)
 
         T = math.cos(theta), -math.sin(theta), math.sin(theta), math.cos(theta)
         self._linear_transform(T)
 
     def _scale(self, factor=None):
         if factor is None:
-            random = r.random() * 50
-            factor = random if random >= 1 else random + 1
+            random = r.random() * 20
+            factor = random if random >= 1 else 1
 
         T = factor, 0, 0, factor
         self._linear_transform(T)
 
     def _translate(self):
-        translate_x, translate_y = r.random() * 50, r.random() * 50
+        translate_x, translate_y = r.random() * 10, r.random() * 10
 
         for i, vertex in enumerate(self.vertices):
             x, y = vertex
@@ -69,6 +71,8 @@ class Wireframe(object):
         ys = [vertex[1] for vertex in self.vertices]
 
         pylab.scatter(xs, ys, marker='.', s=5, c='black')
+        pylab.ylim([-40,40])
+        pylab.xlim([-40,40])
         pylab.show()
 
 
@@ -76,44 +80,6 @@ class Square(Wireframe):
 
     def __init__(self, *args, **kwargs):
         super(Square, self).__init__(*args, **kwargs)
-        self._label_vertices()
-
-    def _label_vertices(self):
-
-        center = [0,0]
-
-        temp_vertices = self.vertices
-
-        for vertex in self.vertices:
-            center[0] += vertex[0] * .25
-            center[1] += vertex[1] * .25
-
-        # Assumes not a perfect diamond
-        for vertex in self.vertices:
-            if vertex[0] < center[0]:
-                if vertex[1] > center[1]:
-
-                    # Top left
-                    temp_vertices[0] = vertex
-                if vertex[1] < center[1]:
-
-                    # Bottom left
-                    temp_vertices[3] = vertex
-            elif vertex[0] > center[0]:
-                if vertex[1] > center[1]:
-
-                    # Top right
-                    temp_vertices[1] = vertex
-
-                if vertex[1] < center[1]:
-
-                    # Bottom right
-                    temp_vertices[2] = vertex
-
-        # Reset and flatten vertices representation
-        self.vertices = temp_vertices
-        self.vector_rep = np.concatenate(self.vertices)
-
 
 class RBF(object):
     """
@@ -152,4 +118,4 @@ class RBF(object):
         return np.dot(G, self.weights)
 
 square = Square()
-print square.vertices, square.vector_rep
+square.draw()
