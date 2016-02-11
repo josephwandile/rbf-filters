@@ -147,18 +147,24 @@ class Test(object):
     def __init__(self, net):
         self.net = net
 
-    def example(self):
-        sq = Square.random()
+    def _example(self, shape):
+        shape.plot()
 
-        sq.plot()
-
-        closest = self.net.closest_center(sq)
+        closest = self.net.closest_center(shape)
         closest.plot(color='blue')
 
-        furthest = self.net.furthest_center(sq)
+        furthest = self.net.furthest_center(shape)
         furthest.plot(color='red')
 
         plt.show()
+
+    def example_square(self):
+        sq = Square.random()
+        self._example(sq)
+
+    def example_noise(self):
+        sq = Noise.random()
+        self._example(sq)
 
     def average(self, n=10):
         print "Average on Squares: ", np.mean([self.net.test_single(Square.random()) for _ in range(n)])
@@ -171,7 +177,7 @@ class Test(object):
 
 if __name__ == '__main__':
     def list_help(context):
-        for cmd in context['cmds']:
+        for cmd in sorted(context['cmds'].keys()):
             print cmd
 
     def _net_regen(context, n):
@@ -192,8 +198,11 @@ if __name__ == '__main__':
     def net_avg(context):
         context['curtest'].average()
 
-    def net_example(context):
-        context['curtest'].example()
+    def net_example_square(context):
+        context['curtest'].example_square()
+
+    def net_example_noise(context):
+        context['curtest'].example_noise()
 
     def open_ipdb(context):
         import pdb; pdb.set_trace()
@@ -217,7 +226,8 @@ if __name__ == '__main__':
         'net regen': net_regen,
         'net show': net_show,
         'net avg': net_avg,
-        'net example': net_example,
+        'net example square': net_example_square,
+        'net example noise': net_example_noise,
         'set sigma': set_sigma,
         'set lambda': set_lambda,
         'net regen custom': net_regen_custom,
