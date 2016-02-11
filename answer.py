@@ -201,7 +201,7 @@ if __name__ == '__main__':
     def set_sigma(context):
         SIGMA = float(raw_input('Sigma: '))
 
-    def set_sigma(context):
+    def set_lambda(context):
         LAM = float(raw_input('Lambda: '))
 
     context = {
