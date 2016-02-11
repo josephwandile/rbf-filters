@@ -1,6 +1,7 @@
 import scipy
 import random
 import math
+import time
 import numpy as np
 import random as r
 from matplotlib import pyplot as plt
@@ -170,6 +171,12 @@ class Test(object):
         print "Average on Squares: ", np.mean([self.net.test_single(Square.random()) for _ in range(n)])
         print "Average on Non-squares: ", np.mean([self.net.test_single(Noise.random()) for _ in range(n)])
 
+    def time(self, n=10):
+        start = time.time()
+        [self.net.test_single(Square.random()) for _ in range(n)]
+        end = time.time()
+        print "Time taken: ", end - start
+
 
 # example usage
 # square = Square()
@@ -201,6 +208,13 @@ if __name__ == '__main__':
     def net_example_square(context):
         context['curtest'].example_square()
 
+    def net_time(context):
+        context['curtest'].time()
+
+    def net_time_custom(context):
+        n = int(raw_input('Squares to classify: '))
+        context['curtest'].time(n=n)
+
     def net_example_noise(context):
         context['curtest'].example_noise()
 
@@ -230,9 +244,27 @@ if __name__ == '__main__':
         'net example noise': net_example_noise,
         'set sigma': set_sigma,
         'set lambda': set_lambda,
+        'net time': net_time,
+        'net time custom': net_time_custom,
         'net regen custom': net_regen_custom,
         'ipdb': open_ipdb
     }
+
+    print ""
+
+    print "/$$$$$$$   /$$$$$$  /$$     /$$         /$$ /$$   /$$  /$$$$$$    /$$  "
+    print "| $$__  $$ /$$__  $$|  $$   /$$/       /$$$$| $$  | $$ /$$$_  $$ /$$$$  "
+    print "| $$  \ $$| $$  \__/ \  $$ /$$/       |_  $$| $$  | $$| $$$$\ $$|_  $$  "
+    print "| $$$$$$$/|  $$$$$$   \  $$$$/          | $$| $$$$$$$$| $$ $$ $$  | $$  "
+    print "| $$____/  \____  $$   \  $$/           | $$|_____  $$| $$\ $$$$  | $$  "
+    print "| $$       /$$  \ $$    | $$            | $$      | $$| $$ \ $$$  | $$  "
+    print "| $$      |  $$$$$$/    | $$           /$$$$$$    | $$|  $$$$$$/ /$$$$$$"
+    print "|__/       \______/     |__/          |______/    |__/ \______/ |______/"
+
+    print ""
+    print "Assignment 1 Group 3 -- RBF Neural Nets"
+    print "Tomas Reimers, Joe Kahn, Gabe Grand"
+    print ""
 
     while True:
         cmd = raw_input('$ ')
