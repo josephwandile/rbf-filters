@@ -196,6 +196,26 @@ class Test(object):
         end = time.time()
         print "Time taken: ", end - start
 
+    def time_func(self, func, n, print_details=False, max_time=None):
+
+        start_time = time.clock()
+
+        try:
+            with timeout(max_time, exception=RuntimeError):
+                result = func(n)
+        except RuntimeError:
+            print 'Maxed Out:', time.clock() - start_time
+            return None
+
+        total_time = time.clock() - start_time
+
+        if print_details:
+            print func.__doc__, \
+                '\n|' + 50 * '=' + '|\n', \
+                total_time, 'seconds\n', \
+                'n =', n, 'F(n) =', result
+
+        return total_time
 
 # example usage
 # square = Square()
