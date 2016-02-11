@@ -82,6 +82,20 @@ class Square(Wireframe):
 
         return s
 
+
+class Triangle(Wireframe):
+    @classmethod
+    def random(cls):
+        vertices = [(0, 1), (1, 0), (0, 0), (0, 0)]
+
+        s = cls(vertices)
+
+        s._scale()
+        s._rotate()
+        s._translate()
+
+        return s
+
 class Noise(Wireframe):
     @classmethod
     def random(cls):
@@ -163,12 +177,17 @@ class Test(object):
         sq = Square.random()
         self._example(sq)
 
+    def example_triangle(self):
+        sq = Triangle.random()
+        self._example(sq)
+
     def example_noise(self):
         sq = Noise.random()
         self._example(sq)
 
     def average(self, n=10):
         print "Average on Squares: ", np.mean([self.net.test_single(Square.random()) for _ in range(n)])
+        print "Average on Triangles: ", np.mean([self.net.test_single(Triangle.random()) for _ in range(n)])
         print "Average on Non-squares: ", np.mean([self.net.test_single(Noise.random()) for _ in range(n)])
 
     def time(self, n=10):
@@ -188,7 +207,8 @@ if __name__ == '__main__':
             print cmd
 
     def _net_regen(context, n):
-        net = RBFN([Square.random() for _ in range(n)])
+        Cls = context['curshape']
+        net = RBFN([Cls.random() for _ in range(n)])
         context['curnet'] = net
         context['curtest'] = Test(net)
 
@@ -218,6 +238,9 @@ if __name__ == '__main__':
     def net_example_noise(context):
         context['curtest'].example_noise()
 
+    def net_example_triangle(context):
+        context['curtest'].example_triangle()
+
     def open_ipdb(context):
         import pdb; pdb.set_trace()
 
@@ -227,9 +250,16 @@ if __name__ == '__main__':
     def set_lambda(context):
         LAM = float(raw_input('Lambda: '))
 
+    def set_triangle(context):
+        context['curshape'] = Triangle
+
+    def set_square(context):
+        context['curshape'] = Square
+
     context = {
         'curnet': None,
-        'curtest': None
+        'curtest': None,
+        'curshape': Square
     }
 
     # generate first net
@@ -242,8 +272,11 @@ if __name__ == '__main__':
         'net avg': net_avg,
         'net example square': net_example_square,
         'net example noise': net_example_noise,
+        'net example triangle': net_example_triangle,
         'set sigma': set_sigma,
         'set lambda': set_lambda,
+        'set shape square': set_square,
+        'set shape triangle': set_triangle,
         'net time': net_time,
         'net time custom': net_time_custom,
         'net regen custom': net_regen_custom,
@@ -252,7 +285,7 @@ if __name__ == '__main__':
 
     print ""
 
-    print "/$$$$$$$   /$$$$$$  /$$     /$$         /$$ /$$   /$$  /$$$$$$    /$$  "
+    print "/$$$$$$$   /$$$$$$  /$$     /$$         /$$ /$$   /$$  /$$$$$$    /$$   "
     print "| $$__  $$ /$$__  $$|  $$   /$$/       /$$$$| $$  | $$ /$$$_  $$ /$$$$  "
     print "| $$  \ $$| $$  \__/ \  $$ /$$/       |_  $$| $$  | $$| $$$$\ $$|_  $$  "
     print "| $$$$$$$/|  $$$$$$   \  $$$$/          | $$| $$$$$$$$| $$ $$ $$  | $$  "
