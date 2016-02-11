@@ -1,38 +1,28 @@
-import pylab
-import numpy as np
 import scipy
-import random as r
+import random
 import math
-
-# TODOs
-# 0. Update euclidean distance formula.
-# 1. Limitations. Four corners. Aligned
-# 2. Dynamically label generated and test data. The corner closest to the top left should be the top left corner for example.
-# 3. Extend by considering the angles and side lengths instead of just the locations of the vertices.
+import numpy as np
+import random as r
+from matplotlib import pyplot as plt
 
 # Calculate euclidean distance between prototype vector and test vector
 # x1 y1 x2 y2 x3 y3 x4 y4
 # a1 b1 a2 b2 a3 b3 a4 b4
 
 LAM = 0.0001  # 'lambda' is a reserved keyword in python
-SIGMA = 1
+SIGMA = 1 # 100 gets good results
 PI = math.pi
 
 class Wireframe(object):
-
-
-    def __init__(self, vertices=[(0, 1), (1, 1), (0, 0), (1, 0)]):
+    def __init__(self, vertices):
         """
         self.tl, self.tr, self.bl, self.br = self.vertices
         """
 
         self.vertices = vertices
 
-        self._scale()
-        self._rotate()
-        self._translate()
-
-        self.vector_rep = np.concatenate(self.vertices)
+    def to_vector(self):
+        return np.concatenate(self.vertices)
 
     def _linear_transform(self, T):
         for i, vertex in enumerate(self.vertices):
@@ -42,8 +32,7 @@ class Wireframe(object):
 
     def _rotate(self, theta=None):
         if theta is None:
-
-            # Avoid relabeling corners
+            # Avoid relabeling corners (by only rotating max of 90 degrees)
             theta = r.random() * (PI/2)
 
         T = math.cos(theta), -math.sin(theta), math.sin(theta), math.cos(theta)
@@ -51,7 +40,7 @@ class Wireframe(object):
 
     def _scale(self, factor=None):
         if factor is None:
-            random = r.random() * 20
+            random = r.random() * 20 + 1
             factor = random if random >= 1 else 1
 
         T = factor, 0, 0, factor
@@ -65,23 +54,40 @@ class Wireframe(object):
             new_vertex = x + translate_x, y + translate_y
             self.vertices[i] = new_vertex
 
-    def draw(self):
-        # I don't want to talk about what I did here. Just go with it. My god. Bad coders unite.
-        xs = [vertex[0] for vertex in self.vertices]
-        ys = [vertex[1] for vertex in self.vertices]
+    def plot(self, color='black'):
+        order = [0, 1, 3, 2, 0]
+        xs = [self.vertices[i][0] for i in order]
+        ys = [self.vertices[i][1] for i in order]
 
-        pylab.scatter(xs, ys, marker='.', s=5, c='black')
-        pylab.ylim([-40,40])
-        pylab.xlim([-40,40])
-        pylab.show()
+        plt.plot(xs, ys, marker='.', linestyle='solid', c=color)
+        plt.ylim([-40,40])
+        plt.xlim([-40,40])
+
+    def draw(self):
+        self.plot()
+        plt.show()
 
 
 class Square(Wireframe):
+    @classmethod
+    def random(cls):
+        vertices = [(0, 1), (1, 1), (0, 0), (1, 0)]
 
-    def __init__(self, *args, **kwargs):
-        super(Square, self).__init__(*args, **kwargs)
+        s = cls(vertices)
 
-class RBF(object):
+        s._scale()
+        s._rotate()
+        s._translate()
+
+        return s
+
+class Noise(Wireframe):
+    @classmethod
+    def random(cls):
+        vertices = [tuple([random.randint(0, 40) for _ in range(2)]) for _ in range(4)]
+        return cls(vertices)
+
+class RBFN(object):
     """
     This takes the training data in the init, and creates an RBF Network with
     as many units as there are training examples. To get the output for a new
@@ -89,21 +95,24 @@ class RBF(object):
     """
 
     def __init__(self, training_data):
-        # Training data will be a list of vectors (x1,y1,x2,y2,x3,y3,x4,y4)
-        self.centers = self._make_vectors(training_data)
+        # Takes list of wireframe
+        self.centers = training_data
         G = self._compute_G(self.centers)
         K = len(self.centers)  # the amount of data points
         y = np.ones(K)  # all the training examples are positive examples
         self.weights = np.dot(
-            np.dot(np.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
+            np.dot(np.linalg.inv(np.dot(G.T, G) + LAM * np.identity(K)), G.T), y)
 
-    def _make_vectors(self, list_of_tuples):
-        return [np.array(x) for x in list_of_tuples]
+    def _to_vector(self, x):
+        return np.array(x.to_vector())
 
     def _distance_sq(self, a, b):
         # this is equivalent to every member of (a - b) being squared and summed
         # OR ||a - b||^2 (the square of the euclidean distance)
-        return np.dot(a - b, a - b)
+        return np.dot(
+            self._to_vector(a) - self._to_vector(b),
+            self._to_vector(a) - self._to_vector(b)
+        )
 
     def _activation(self, a, b):
         return np.exp((-1 * self._distance_sq(a, b)) / SIGMA)
@@ -111,9 +120,113 @@ class RBF(object):
     def _compute_G(self, X):
         return np.array([[self._activation(x, c) for c in self.centers] for x in X])
 
+    def closest_center(self, datum):
+        return min(self.centers, key=lambda x: self._distance_sq(datum, x))
+
+    def furthest_center(self, datum):
+        return max(self.centers, key=lambda x: self._distance_sq(datum, x))
+
     def test(self, data):
-        G = self._compute_G(self._make_vectors(data))
+        G = self._compute_G(data)
         return np.dot(G, self.weights)
 
-square = Square()
-square.draw()
+    def test_single(self, data):
+        result = self.test([data])
+        return result[0]
+
+    def draw(self):
+        columns = math.floor(math.sqrt(len(self.centers)))
+        rows = columns + 1
+        for i, c in enumerate(self.centers):
+            plt.subplot(rows, columns, i + 1)
+            c.plot()
+        plt.show()
+
+
+class Test(object):
+    def __init__(self, net):
+        self.net = net
+
+    def example(self):
+        sq = Square.random()
+
+        sq.plot()
+
+        closest = self.net.closest_center(sq)
+        closest.plot(color='blue')
+
+        furthest = self.net.furthest_center(sq)
+        furthest.plot(color='red')
+
+        plt.show()
+
+    def average(self, n=10):
+        print "Average on Squares: ", np.mean([self.net.test_single(Square.random()) for _ in range(n)])
+        print "Average on Non-squares: ", np.mean([self.net.test_single(Noise.random()) for _ in range(n)])
+
+
+# example usage
+# square = Square()
+# square.draw()
+
+if __name__ == '__main__':
+    def list_help(context):
+        for cmd in context['cmds']:
+            print cmd
+
+    def _net_regen(context, n):
+        net = RBFN([Square.random() for _ in range(n)])
+        context['curnet'] = net
+        context['curtest'] = Test(net)
+
+    def net_regen_custom(context):
+        n = int(raw_input('Training size: '))
+        _net_regen(context, n)
+
+    def net_regen(context):
+        _net_regen(context, 100)
+
+    def net_show(context):
+        context['curnet'].draw()
+
+    def net_avg(context):
+        context['curtest'].average()
+
+    def net_example(context):
+        context['curtest'].example()
+
+    def open_ipdb(context):
+        import pdb; pdb.set_trace()
+
+    def set_sigma(context):
+        SIGMA = float(raw_input('Sigma: '))
+
+    def set_sigma(context):
+        LAM = float(raw_input('Lambda: '))
+
+    context = {
+        'curnet': None,
+        'curtest': None
+    }
+
+    # generate first net
+    net_regen(context)
+
+    context['cmds'] = {
+        'help': list_help,
+        'net regen': net_regen,
+        'net show': net_show,
+        'net avg': net_avg,
+        'net example': net_example,
+        'set sigma': set_sigma,
+        'set lambda': set_lambda,
+        'net regen custom': net_regen_custom,
+        'ipdb': open_ipdb
+    }
+
+    while True:
+        cmd = raw_input('$ ')
+        if cmd in context['cmds']:
+            context['cmds'][cmd](context)
+        else:
+            print 'Command not found! (Type "help" for help)'
